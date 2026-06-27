@@ -17,7 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
-import androidx.compose.material.icons.filled.Photograph
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -126,7 +126,7 @@ fun StreamViewScreen(
 
             IconButton(onClick = { }) {
                 Icon(
-                    Icons.Filled.Photograph,
+                    Icons.Filled.PhotoCamera,
                     contentDescription = "Screenshot",
                     tint = Color.White,
                 )
