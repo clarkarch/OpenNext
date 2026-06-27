@@ -1,6 +1,8 @@
 package com.opennext.app.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,47 +10,71 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import com.opennext.app.data.mockUser
+import com.opennext.app.ui.components.SettingsRowClickable
+import com.opennext.app.ui.components.SettingsRowSlider
 import com.opennext.app.ui.theme.Blue40
 import com.opennext.app.ui.theme.DarkBg
 import com.opennext.app.ui.theme.DarkCard
-import com.opennext.app.ui.theme.DarkSurface
+import com.opennext.app.ui.theme.Error
+import com.opennext.app.ui.theme.OnDark
+import com.opennext.app.ui.theme.OnDarkMuted
 import com.opennext.app.ui.theme.OnDarkVariant
+import com.opennext.app.ui.theme.TierUltimate
+
+private val RESOLUTION_OPTIONS = listOf("Auto", "1080p", "720p", "480p")
+private val FPS_OPTIONS = listOf("Auto", "60", "30")
+private val CODEC_OPTIONS = listOf("Auto", "H.264", "HEVC", "AV1")
+private const val BITRATE_MIN = 10f
+private const val BITRATE_MAX = 50f
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onSignOut: () -> Unit = {},
 ) {
+    var showSignOutDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         containerColor = DarkBg,
         topBar = {
@@ -66,80 +92,384 @@ fun SettingsScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = DarkBg,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White,
+                    titleContentColor = OnDark,
+                    navigationIconContentColor = OnDark,
                 ),
             )
         },
     ) { padding ->
-        Column(
+        val screenWidth = LocalConfiguration.current.screenWidthDp
+        val isTablet = screenWidth >= 600
+
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
+                .padding(padding),
         ) {
-            SettingsSection(title = "Stream") {
-                SettingsDropdown(
-                    label = "Region",
-                    options = listOf("Auto", "US West", "US East", "EU West", "EU Central", "Asia"),
-                    selected = "Auto",
-                    onSelected = { },
+            if (isTablet) {
+                TabletSettingsContent(
+                    onSignOutClick = { showSignOutDialog = true },
                 )
-                SettingsDropdown(
-                    label = "Resolution",
-                    options = listOf("1920x1080", "2560x1440", "3840x2160", "1280x720"),
-                    selected = "1920x1080",
-                    onSelected = { },
-                )
-                SettingsDropdown(
-                    label = "FPS",
-                    options = listOf("60", "30", "120", "240"),
-                    selected = "60",
-                    onSelected = { },
-                )
-                SettingsDropdown(
-                    label = "Codec",
-                    options = listOf("H264", "HEVC", "AV1"),
-                    selected = "H264",
-                    onSelected = { },
-                )
-                SettingsDropdown(
-                    label = "Bitrate",
-                    options = listOf("Auto", "25 Mbps", "50 Mbps", "75 Mbps", "100 Mbps"),
-                    selected = "Auto",
-                    onSelected = { },
-                )
-                SettingsDropdown(
-                    label = "Color Quality",
-                    options = listOf("8-bit 4:2:0", "8-bit 4:4:4", "10-bit 4:2:0", "10-bit 4:4:4"),
-                    selected = "10-bit 4:2:0",
-                    onSelected = { },
+            } else {
+                PhoneSettingsContent(
+                    onSignOutClick = { showSignOutDialog = true },
                 )
             }
+        }
+    }
 
-            Spacer(modifier = Modifier.height(16.dp))
+    if (showSignOutDialog) {
+        SignOutDialog(
+            onConfirm = {
+                showSignOutDialog = false
+                onSignOut()
+            },
+            onDismiss = { showSignOutDialog = false },
+        )
+    }
+}
 
-            SettingsSection(title = "Audio") {
-                SettingsDropdown(
-                    label = "Microphone",
-                    options = listOf("Default", "None"),
-                    selected = "Default",
-                    onSelected = { },
-                )
+@Composable
+private fun PhoneSettingsContent(
+    onSignOutClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp),
+    ) {
+        AccountSection()
+        Spacer(modifier = Modifier.height(24.dp))
+        StreamingSection()
+        Spacer(modifier = Modifier.height(24.dp))
+        AboutSection(onSignOutClick = onSignOutClick)
+        Spacer(modifier = Modifier.height(32.dp))
+    }
+}
+
+@Composable
+private fun TabletSettingsContent(
+    onSignOutClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            SettingsCard(
+                title = "Account",
+                modifier = Modifier.weight(1f),
+            ) {
+                AccountCardContent()
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            SettingsSection(title = "About") {
-                SettingsInfoRow(label = "Version", value = "0.1.0")
-                SettingsInfoRow(label = "License", value = "MIT")
+            SettingsCard(
+                title = "Streaming",
+                modifier = Modifier.weight(1f),
+            ) {
+                StreamingCardContent()
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            SettingsCard(
+                title = "About",
+                modifier = Modifier.weight(1f),
+            ) {
+                AboutCardContent(onSignOutClick = onSignOutClick)
+            }
+            SettingsCard(
+                title = "Quick Info",
+                modifier = Modifier.weight(1f),
+            ) {
+                QuickInfoCardContent()
+            }
         }
     }
 }
+
+// ── Account Section ──────────────────────────────────────────────
+
+@Composable
+private fun AccountSection() {
+    SettingsSection(title = "Account") {
+        AccountCardContent()
+    }
+}
+
+@Composable
+private fun AccountCardContent() {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkCard),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AsyncImage(
+                model = mockUser.avatarUrl,
+                contentDescription = "Avatar",
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop,
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = mockUser.displayName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = OnDark,
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = mockUser.email,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = OnDarkVariant,
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                TierBadge(tier = mockUser.membershipTier.name)
+            }
+        }
+    }
+}
+
+@Composable
+private fun TierBadge(tier: String) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(TierUltimate.copy(alpha = 0.15f))
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+    ) {
+        Text(
+            text = tier,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = TierUltimate,
+        )
+    }
+}
+
+// ── Streaming Section ────────────────────────────────────────────
+
+@Composable
+private fun StreamingSection() {
+    SettingsSection(title = "Streaming") {
+        StreamingCardContent()
+    }
+}
+
+@Composable
+private fun StreamingCardContent() {
+    var resolution by remember { mutableStateOf(RESOLUTION_OPTIONS[0]) }
+    var fps by remember { mutableStateOf(FPS_OPTIONS[0]) }
+    var codec by remember { mutableStateOf(CODEC_OPTIONS[0]) }
+    var bitrate by remember { mutableFloatStateOf(25f) }
+
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkCard),
+    ) {
+        Column {
+            SettingsDropdownRow(
+                label = "Resolution",
+                options = RESOLUTION_OPTIONS,
+                selected = resolution,
+                onSelected = { resolution = it },
+            )
+            SettingsDropdownRow(
+                label = "FPS",
+                options = FPS_OPTIONS,
+                selected = fps,
+                onSelected = { fps = it },
+            )
+            SettingsDropdownRow(
+                label = "Codec",
+                options = CODEC_OPTIONS,
+                selected = codec,
+                onSelected = { codec = it },
+            )
+            SettingsRowSlider(
+                title = "Bitrate",
+                value = bitrate,
+                onValueChange = { bitrate = it },
+                valueLabel = "${bitrate.toInt()} Mbps",
+                valueRange = BITRATE_MIN..BITRATE_MAX,
+            )
+        }
+    }
+}
+
+// ── About Section ────────────────────────────────────────────────
+
+@Composable
+private fun AboutSection(onSignOutClick: () -> Unit) {
+    SettingsSection(title = "About") {
+        AboutCardContent(onSignOutClick = onSignOutClick)
+    }
+}
+
+@Composable
+private fun AboutCardContent(onSignOutClick: () -> Unit) {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkCard),
+    ) {
+        Column {
+            SettingsRowClickable(
+                title = "App Version",
+                subtitle = "1.0.0",
+                onClick = { },
+            )
+            SettingsRowClickable(
+                title = "Licenses",
+                subtitle = "Open source licenses",
+                onClick = { },
+            )
+            Button(
+                onClick = onSignOutClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Error.copy(alpha = 0.15f),
+                    contentColor = Error,
+                ),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Warning,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Sign Out",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+        }
+    }
+}
+
+// ── Quick Info (tablet only) ─────────────────────────────────────
+
+@Composable
+private fun QuickInfoCardContent() {
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkCard),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            QuickInfoRow(label = "Platform", value = "Android")
+            QuickInfoRow(label = "Stream Protocol", value = "WebRTC")
+            QuickInfoRow(label = "Codec Support", value = "H.264, HEVC, AV1")
+            QuickInfoRow(label = "Max Resolution", value = "1080p")
+            QuickInfoRow(label = "Max Frame Rate", value = "60 FPS")
+        }
+    }
+}
+
+@Composable
+private fun QuickInfoRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = OnDarkVariant,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = OnDark,
+        )
+    }
+}
+
+// ── Settings Dropdown Row ────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsDropdownRow(
+    label: String,
+    options: List<String>,
+    selected: String,
+    onSelected: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    androidx.compose.material3.ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyLarge,
+                color = OnDark,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = selected,
+                style = MaterialTheme.typography.bodyMedium,
+                color = OnDarkVariant,
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            androidx.compose.material3.ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+        }
+
+        androidx.compose.material3.ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            containerColor = DarkCard,
+        ) {
+            options.forEach { option ->
+                androidx.compose.material3.DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = option,
+                            color = if (option == selected) Blue40 else OnDark,
+                        )
+                    },
+                    onClick = {
+                        onSelected(option)
+                        expanded = false
+                    },
+                )
+            }
+        }
+    }
+}
+
+// ── Shared Layout Primitives ─────────────────────────────────────
 
 @Composable
 private fun SettingsSection(
@@ -154,92 +484,74 @@ private fun SettingsSection(
             color = Blue40,
             modifier = Modifier.padding(bottom = 8.dp),
         )
-        Card(
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = DarkCard),
-        ) {
-            Column(modifier = Modifier.padding(4.dp)) {
-                content()
-            }
+        content()
+    }
+}
+
+@Composable
+private fun SettingsCard(
+    title: String,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = DarkCard),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Blue40,
+                modifier = Modifier.padding(bottom = 12.dp),
+            )
+            content()
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+// ── Sign Out Dialog ──────────────────────────────────────────────
+
 @Composable
-private fun SettingsDropdown(
-    label: String,
-    options: List<String>,
-    selected: String,
-    onSelected: (String) -> Unit,
+private fun SignOutDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it },
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = DarkCard,
+        titleContentColor = OnDark,
+        textContentColor = OnDarkVariant,
+        title = {
             Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.White,
-                modifier = Modifier.weight(1f),
+                text = "Sign Out",
+                fontWeight = FontWeight.Bold,
             )
-            Text(
-                text = selected,
-                style = MaterialTheme.typography.bodyMedium,
-                color = OnDarkVariant,
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-        }
-
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            containerColor = DarkSurface,
-        ) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(option, color = if (option == selected) Blue40 else Color.White) },
-                    onClick = {
-                        onSelected(option)
-                        expanded = false
-                    },
+        },
+        text = {
+            Text(text = "Are you sure you want to sign out? You will need to sign in again to access your games.")
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Error,
+                    contentColor = OnDark,
+                ),
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Text("Sign Out")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = "Cancel",
+                    color = OnDarkVariant,
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun SettingsInfoRow(
-    label: String,
-    value: String,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.White,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            color = OnDarkVariant,
-        )
-    }
+        },
+    )
 }

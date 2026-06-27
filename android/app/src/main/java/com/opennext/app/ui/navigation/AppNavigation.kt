@@ -1,5 +1,12 @@
 package com.opennext.app.ui.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -15,6 +22,36 @@ import com.opennext.app.ui.screens.SettingsScreen
 import com.opennext.app.ui.screens.StreamLoadingScreen
 import com.opennext.app.ui.screens.StreamViewScreen
 
+private const val TRANSITION_DURATION = 300
+
+private val fadeSlideIn: EnterTransition =
+    fadeIn(animationSpec = tween(TRANSITION_DURATION)) +
+        slideInHorizontally(
+            animationSpec = tween(TRANSITION_DURATION),
+            initialOffsetX = { fullWidth -> fullWidth / 4 },
+        )
+
+private val fadeSlideOut: ExitTransition =
+    fadeOut(animationSpec = tween(TRANSITION_DURATION)) +
+        slideOutHorizontally(
+            animationSpec = tween(TRANSITION_DURATION),
+            targetOffsetX = { fullWidth -> -fullWidth / 4 },
+        )
+
+private val fadeSlidePopIn: EnterTransition =
+    fadeIn(animationSpec = tween(TRANSITION_DURATION)) +
+        slideInHorizontally(
+            animationSpec = tween(TRANSITION_DURATION),
+            initialOffsetX = { fullWidth -> -fullWidth / 4 },
+        )
+
+private val fadeSlidePopOut: ExitTransition =
+    fadeOut(animationSpec = tween(TRANSITION_DURATION)) +
+        slideOutHorizontally(
+            animationSpec = tween(TRANSITION_DURATION),
+            targetOffsetX = { fullWidth -> fullWidth / 4 },
+        )
+
 @Composable
 fun OpenNextNavHost(
     navController: NavHostController = rememberNavController(),
@@ -22,6 +59,10 @@ fun OpenNextNavHost(
     NavHost(
         navController = navController,
         startDestination = Screen.Login.route,
+        enterTransition = { fadeSlideIn },
+        exitTransition = { fadeSlideOut },
+        popEnterTransition = { fadeSlidePopIn },
+        popExitTransition = { fadeSlidePopOut },
     ) {
         composable(Screen.Login.route) {
             LoginScreen(
@@ -73,6 +114,11 @@ fun OpenNextNavHost(
         composable(Screen.Settings.route) {
             SettingsScreen(
                 onBack = { navController.popBackStack() },
+                onSignOut = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                },
             )
         }
 
