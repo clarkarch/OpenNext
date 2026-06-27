@@ -54,7 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.opennext.app.data.MockData
+import com.opennext.app.data.mockGames
 import com.opennext.app.data.model.Game
 import com.opennext.app.ui.components.TierBadgeBanner
 import com.opennext.app.ui.theme.DarkBg
@@ -73,7 +73,7 @@ fun GameDetailScreen(
     onBack: () -> Unit,
 ) {
     val game: Game? = remember(gameId) {
-        MockData.mockGames.find {
+        mockGames.find {
             it.id == gameId || it.title.lowercase().replace(" ", "-") == gameId
         }
     }
