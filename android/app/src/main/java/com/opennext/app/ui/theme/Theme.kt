@@ -18,7 +18,7 @@ private val OpenNextDarkColorScheme = darkColorScheme(
 
     secondary = Blue60,
     onSecondary = DarkBg,
-    secondaryContainer = BlueGlowDim,
+    secondaryContainer = GlowCyanDim,
     onSecondaryContainer = Blue90,
 
     tertiary = PlayerGreen,
