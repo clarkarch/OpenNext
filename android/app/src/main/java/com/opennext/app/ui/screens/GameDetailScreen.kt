@@ -72,7 +72,7 @@ fun GameDetailScreen(
     onPlay: (String) -> Unit,
     onBack: () -> Unit,
 ) {
-    val game = remember(gameId) {
+    val game: Game? = remember(gameId) {
         MockData.mockGames.find {
             it.id == gameId || it.title.lowercase().replace(" ", "-") == gameId
         }
