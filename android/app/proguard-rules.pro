@@ -1,6 +1,8 @@
 # Ktor
 -keep class io.ktor.** { *; }
 -keepclassmembers class io.ktor.** { volatile <fields>; }
+-dontwarn java.lang.management.**
+-dontwarn io.ktor.util.debug.IntellijIdeaDebugDetector
 -keep class kotlinx.serialization.** { *; }
 -keepclassmembers class kotlinx.serialization.** { volatile <fields>; }
 -keep,includedescriptorclasses class com.opennext.app.**$$serializer { *; }
